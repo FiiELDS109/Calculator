@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --purple: #260672;
+            --yellow: #ffff8a;
+            --green: #0be18d;
+            --purple-deep: #170347;
+            --purple-mid: #3a1496;
+            --purple-light: #5530b8;
+            --font: 'Space Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+            box-sizing: border-box;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: var(--font);
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--purple-deep);
+            background: linear-gradient(135deg, var(--purple-deep) 0%, var(--purple) 50%, var(--purple-deep) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .calculator {
+            background: var(--purple);
+            border: 2px solid var(--green);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 6px rgba(11, 225, 141, 0.12);
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .display {
+            background: var(--purple-deep);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        #history {
+            color: var(--green);
+            font-size: 14px;
+            text-align: right;
+            min-height: 20px;
+            margin-bottom: 8px;
+            word-break: break-all;
+            opacity: 0.9;
+        }
+
+        #screen {
+            color: var(--yellow);
+            font-size: 40px;
+            font-weight: 400;
+            text-align: right;
+            word-break: break-all;
+            min-height: 60px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        button {
+            border: none;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        button:focus-visible {
+            outline: 3px solid var(--yellow);
+            outline-offset: 2px;
+        }
+
+        .number, .decimal {
+            background: var(--purple-mid);
+            color: white;
+        }
+
+        .number:hover, .decimal:hover {
+            background: var(--purple-light);
+        }
+
+        .operator {
+            background: var(--yellow);
+            color: var(--purple);
+        }
+
+        .operator:hover {
+            background: #ffffb3;
+        }
+
+        .function {
+            background: #ffffff;
+            color: var(--purple);
+        }
+
+        .function:hover {
+            background: #e6dcff;
+        }
+
+        .equals {
+            background: var(--green);
+            color: var(--purple);
+            grid-row: span 2;
+        }
+
+        .equals:hover {
+            background: #3df0a8;
+        }
+
+        .clear {
+            grid-column: span 2;
+        }
+
+        .zero {
+            grid-column: span 2;
+        }
+
+        .credit {
+            margin-top: 24px;
+            color: var(--yellow);
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .credit strong {
+            font-weight: 700;
+            color: var(--green);
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display">
+            <div id="history"></div>
+            <div id="screen">0</div>
+        </div>
+        <div class="buttons">
+            <button class="function clear" onclick="clearDisplay()">C</button>
+            <button class="operator" onclick="inputOperator('÷')">÷</button>
+            <button class="operator" onclick="inputOperator('×')">×</button>
+
+            <button class="number" onclick="inputDigit('7')">7</button>
+            <button class="number" onclick="inputDigit('8')">8</button>
+            <button class="number" onclick="inputDigit('9')">9</button>
+            <button class="operator" onclick="inputOperator('-')">-</button>
+
+            <button class="number" onclick="inputDigit('4')">4</button>
+            <button class="number" onclick="inputDigit('5')">5</button>
+            <button class="number" onclick="inputDigit('6')">6</button>
+            <button class="operator" onclick="inputOperator('+')">+</button>
+
+            <button class="number" onclick="inputDigit('1')">1</button>
+            <button class="number" onclick="inputDigit('2')">2</button>
+            <button class="number" onclick="inputDigit('3')">3</button>
+            <button class="equals" onclick="calculate()">=</button>
+
+            <button class="number zero" onclick="inputDigit('0')">0</button>
+            <button class="decimal" onclick="inputDecimal()">.</button>
+        </div>
+    </div>
+
+    <p class="credit">Made By <strong>Fidelis Omoni</strong></p>
+
+    <script>
+        let display = '0';
+        let previousValue = null;
+        let operation = null;
+        let waitingForOperand = false;
+
+        let historyText = '';
+
+        const screen = document.getElementById('screen');
+        const historyEl = document.getElementById('history');
+
+        function updateDisplay() {
+            screen.textContent = display;
+            historyEl.textContent = historyText;
+        }
+
+        function inputDigit(digit) {
+            if (waitingForOperand) {
+                display = String(digit);
+                waitingForOperand = false;
+            } else {
+                display = display === '0' ? String(digit) : display + digit;
+            }
+            updateDisplay();
+        }
+
+        function inputDecimal() {
+            if (waitingForOperand) {
+                display = '0.';
+                waitingForOperand = false;
+            } else if (display.indexOf('.') === -1) {
+                display += '.';
+            }
+            updateDisplay();
+        }
+
+        function clearDisplay() {
+            display = '0';
+            previousValue = null;
+            operation = null;
+            waitingForOperand = false;
+            historyText = '';
+            updateDisplay();
+        }
+
+        function inputOperator(nextOperation) {
+            const inputValue = parseFloat(display);
+
+            if (previousValue === null) {
+                previousValue = inputValue;
+            } else if (operation) {
+                const result = performCalculation(previousValue, inputValue, operation);
+                display = String(result);
+                previousValue = result;
+            }
+
+            waitingForOperand = true;
+            operation = nextOperation;
+            historyText = previousValue + ' ' + nextOperation;
+            updateDisplay();
+        }
+
+        function calculate() {
+            const inputValue = parseFloat(display);
+
+            if (previousValue !== null && operation) {
+                const result = performCalculation(previousValue, inputValue, operation);
+                historyText = previousValue + ' ' + operation + ' ' + inputValue + ' =';
+                display = String(result);
+                previousValue = null;
+                operation = null;
+                waitingForOperand = true;
+                updateDisplay();
+            }
+        }
+
+        function performCalculation(firstValue, secondValue, operation) {
+            switch (operation) {
+                case '+':
+                    return firstValue + secondValue;
+                case '-':
+                    return firstValue - secondValue;
+                case '×':
+                    return firstValue * secondValue;
+                case '÷':
+                    return secondValue !== 0 ? firstValue / secondValue : 0;
+                default:
+                    return secondValue;
+            }
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', function(event) {
+            const key = event.key;
+
+            if (key >= '0' && key <= '9') {
+                inputDigit(key);
+            } else if (key === '.') {
+                inputDecimal();
+            } else if (key === '+' || key === '-') {
+                inputOperator(key);
+            } else if (key === '*') {
+                inputOperator('×');
+            } else if (key === '/') {
+                event.preventDefault();
+                inputOperator('÷');
+            } else if (key === 'Enter' || key === '=') {
+                event.preventDefault();
+                calculate();
+            } else if (key === 'Escape' || key === 'c' || key === 'C') {
+                clearDisplay();
+            }
+        });
+    </script>
+</body>
+</html>
